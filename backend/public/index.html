@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sudoku</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header>
+        <h1>Sudoku</h1>
+        <p>Fill every row, column, and 3×3 box with digits 1 through 9.</p>
+      </header>
+      <main>
+        <section class="board-wrapper" aria-live="polite">
+          <div class="board-stack">
+            <div
+              id="board"
+              class="board"
+              role="grid"
+              aria-label="Sudoku board"
+            ></div>
+            <svg
+              id="boardOverlay"
+              class="board-overlay"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            ></svg>
+          </div>
+        </section>
+        <section class="controls">
+          <div class="level-row">
+            <label class="level-select">
+              <span>Difficulty</span>
+              <select id="levelSelect" aria-label="Select difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </label>
+            <a class="edit-link" href="/edit.html">Edit puzzles</a>
+          </div>
+          <div class="buttons">
+            <button id="newPuzzle" type="button">New Puzzle</button>
+            <button id="noteModeToggle" type="button" class="secondary">
+              Notes Off
+            </button>
+            <button id="checkPuzzle" type="button" class="primary">
+              Check Solution
+            </button>
+          </div>
+          <p id="status" class="status" role="status">Loading puzzle…</p>
+          <div class="rule-legend">
+            <div class="legend-item">
+              <span class="legend-dot white"></span>
+              Adjacent digits differ by 1
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot black"></span>
+              Adjacent digits have 1:2 ratio
+            </div>
+            <div class="legend-item">
+              <span class="legend-thermo"></span>
+              Thermometers increase from bulb to tip
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
+

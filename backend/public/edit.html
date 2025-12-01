@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sudoku Puzzle Editor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="passwordGate" class="password-gate">
+      <form id="passwordForm" class="password-card">
+        <h2>Restricted access</h2>
+        <p>Enter the editor password to manage puzzles.</p>
+        <label>
+          Password
+          <input
+            type="password"
+            id="passwordInput"
+            name="password"
+            autocomplete="current-password"
+            placeholder="Password"
+            required
+          />
+        </label>
+        <button type="submit" class="primary">Enter</button>
+        <p id="passwordError" class="status password-error" data-state="error"></p>
+      </form>
+    </div>
+    <div class="app-shell">
+      <header>
+        <h1>Puzzle Editor</h1>
+        <p>Craft handcrafted Sudokus with advanced constraints.</p>
+        <a class="back-link" href="/">← Back to the game</a>
+      </header>
+      <main class="editor">
+        <section class="editor-hero">
+          <div>
+            <h2>Design custom constraints</h2>
+            <p>
+              Fill in the givens, lock in the solved grid, then sprinkle extra
+              logic. White dots mean digits differ by one, black dots mean
+              they’re a 1:2 ratio, and thermometers must strictly increase from
+              bulb to tip.
+            </p>
+          </div>
+          <div class="editor-hero-pills">
+            <span class="editor-pill">○ White dot = ±1</span>
+            <span class="editor-pill">● Black dot = ×2</span>
+            <span class="editor-pill">☀ Thermometer ascends</span>
+          </div>
+        </section>
+        <div class="status-card">
+          <p id="editorStatus" class="status" role="status">Loading puzzles…</p>
+        </div>
+        <div id="editorSections" class="editor-sections"></div>
+      </main>
+    </div>
+    <script src="edit.js" defer></script>
+  </body>
+</html>
+
