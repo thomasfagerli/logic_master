@@ -8,6 +8,7 @@ const levelSelect = document.getElementById('levelSelect');
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GRID_SIZE = 9;
+const DEFAULT_VICTORY_MESSAGE = 'Great job! Puzzle solved! Load a new puzzle?';
 
 let currentLevel = levelSelect.value;
 let boardLoaded = false;
@@ -51,6 +52,26 @@ const clearHighlights = () => {
 
 const getCellKey = (row, col) => `${row}-${col}`;
 
+const isInBounds = (value) => Number.isInteger(value) && value >= 0 && value < GRID_SIZE;
+
+const getCellInputElement = (row, col) =>
+  boardEl.querySelector(`.cell[data-row="${row}"][data-col="${col}"] .cell-input`);
+
+const moveFocus = (row, col, deltaRow, deltaCol) => {
+  let nextRow = row + deltaRow;
+  let nextCol = col + deltaCol;
+
+  while (isInBounds(nextRow) && isInBounds(nextCol)) {
+    const nextInput = getCellInputElement(nextRow, nextCol);
+    if (nextInput) {
+      nextInput.focus();
+      return;
+    }
+    nextRow += deltaRow;
+    nextCol += deltaCol;
+  }
+};
+
 const updateCellNotes = (row, col) => {
   const cell = boardEl.querySelector(
     `.cell[data-row="${row}"][data-col="${col}"]`,
@@ -85,6 +106,34 @@ const clearNotesForCell = (row, col) => {
   if (notesState.has(key)) {
     notesState.delete(key);
     updateCellNotes(row, col);
+  }
+};
+
+const handleCellKeydown = (event, row, col) => {
+  const isPreset = event.target?.dataset?.preset === 'true';
+  const navigation = {
+    ArrowUp: { dr: -1, dc: 0 },
+    ArrowDown: { dr: 1, dc: 0 },
+    ArrowLeft: { dr: 0, dc: -1 },
+    ArrowRight: { dr: 0, dc: 1 },
+  };
+
+  const direction = navigation[event.key];
+  if (direction) {
+    event.preventDefault();
+    moveFocus(row, col, direction.dr, direction.dc);
+    return;
+  }
+
+  if ((event.key === 'Delete' || event.key === 'Backspace') && !isPreset) {
+    const hasValue = Boolean(event.target.value);
+    const hasNotes = notesState.has(getCellKey(row, col));
+    if (hasValue || hasNotes) {
+      event.preventDefault();
+      event.target.value = '';
+      event.target.classList.remove('error');
+      clearNotesForCell(row, col);
+    }
   }
 };
 
@@ -134,7 +183,8 @@ const createCell = (value, row, col) => {
 
   if (value) {
     input.value = value;
-    input.disabled = true;
+    input.readOnly = true;
+    input.dataset.preset = 'true';
     cell.classList.add('preset');
   } else {
     input.value = '';
@@ -149,6 +199,8 @@ const createCell = (value, row, col) => {
       cell.classList.remove('cell-note-mode');
     });
   }
+
+  input.addEventListener('keydown', (event) => handleCellKeydown(event, row, col));
 
   const notesLayer = document.createElement('div');
   notesLayer.className = 'cell-notes';
@@ -191,8 +243,6 @@ const normalizeCell = (cell) => {
   }
   return null;
 };
-
-const isInBounds = (value) => Number.isInteger(value) && value >= 0 && value < GRID_SIZE;
 
 const getCellCenter = (row, col) => ({
   x: ((col + 0.5) / GRID_SIZE) * 100,
@@ -248,7 +298,7 @@ const renderRulesOverlay = (rules = { kropki: [], thermometers: [] }) => {
     const points = centers.map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
 
     const group = createSvgElement('g');
-    group.setAttribute('opacity', '0.7');
+    group.setAttribute('opacity', '0.55');
     const stem = createSvgElement('polyline', { points });
     stem.classList.add('thermo-stem');
     const bulb = createSvgElement('circle', {
@@ -298,7 +348,7 @@ const highlightErrors = ({ incorrect = [], empty = [] }) => {
     );
     if (!cell) return;
     const input = cell.querySelector('.cell-input');
-    if (input && !input.disabled) {
+    if (input && input.dataset.preset !== 'true') {
       cell.classList.add('error');
     }
   });
@@ -308,7 +358,7 @@ const highlightErrors = ({ incorrect = [], empty = [] }) => {
     );
     if (!cell) return;
     const input = cell.querySelector('.cell-input');
-    if (input && !input.disabled) {
+    if (input && input.dataset.preset !== 'true') {
       cell.classList.add('error-empty');
     }
   });
@@ -372,7 +422,11 @@ const checkSolution = async () => {
 
     if (payload.success) {
       clearHighlights();
-      setStatus('Great job! Puzzle solved! Load a new puzzle?', 'success');
+      const victoryMessage =
+        payload.victoryMessage && payload.victoryMessage.trim()
+          ? payload.victoryMessage.trim()
+          : DEFAULT_VICTORY_MESSAGE;
+      setStatus(victoryMessage, 'success');
       notesState.clear();
       refreshAllNotes();
     } else {

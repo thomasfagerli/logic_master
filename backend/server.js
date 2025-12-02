@@ -12,6 +12,14 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3001;
 const VALID_KROPKI_TYPES = ['white', 'black', 'domino'];
+const VICTORY_MESSAGES = {
+  easy: 'Great job! Flag is: flag{SUDOKUNOTSODUKO}',
+  medium: 'Great job! Flag is: flag{KropkiMaster}',
+  hard: 'Great job! Flag is: flag{Thermostat}',
+};
+
+const getVictoryMessage = (level) =>
+  VICTORY_MESSAGES[level] || 'Great job! Puzzle solved! Load a new puzzle?';
 
 app.use(cors());
 app.use(express.json());
@@ -151,7 +159,10 @@ const normalizeRulesPayload = (rules = DEFAULT_RULES()) => {
 app.get('/api/puzzles', (req, res) => {
   const puzzles = getAllPuzzles();
   const sanitized = Object.entries(puzzles).reduce((acc, [level, value]) => {
-    acc[level] = { board: value.board, rules: value.rules || DEFAULT_RULES() };
+    acc[level] = {
+      board: value.board,
+      rules: value.rules || DEFAULT_RULES(),
+    };
     return acc;
   }, {});
   res.json({ levels: LEVELS, puzzles: sanitized });
@@ -163,17 +174,22 @@ app.get('/api/puzzles/:level', (req, res) => {
   if (!puzzle) {
     return res.status(404).json({ message: 'Puzzle not found.' });
   }
-  return res.json({ level, board: puzzle.board, rules: puzzle.rules });
+  return res.json({
+    level,
+    board: puzzle.board,
+    rules: puzzle.rules,
+  });
 });
 
 app.post('/api/validate', (req, res) => {
   const { level, board } = req.body || {};
+  const normalizedLevel = (level || '').toLowerCase();
 
-  if (!level || !isValidBoard(board, { allowZero: true })) {
+  if (!normalizedLevel || !isValidBoard(board, { allowZero: true })) {
     return res.status(400).json({ message: 'Invalid board payload.' });
   }
 
-  const puzzle = getPuzzle(level);
+  const puzzle = getPuzzle(normalizedLevel);
   if (!puzzle) {
     return res.status(404).json({ message: 'Puzzle not found.' });
   }
@@ -192,6 +208,11 @@ app.post('/api/validate', (req, res) => {
   });
 
   const success = errors.length === 0;
+
+  if (success) {
+    const victoryMessage = getVictoryMessage(normalizedLevel);
+    return res.json({ success, errors, victoryMessage });
+  }
 
   return res.json({ success, errors });
 });
@@ -228,20 +249,23 @@ app.put('/api/admin/puzzles/:level', (req, res) => {
     return res.status(400).json({ message: normalizedRules.message });
   }
 
+  const existingPuzzle = getPuzzle(level);
+  if (!existingPuzzle) {
+    return res.status(404).json({ message: 'Unknown puzzle level.' });
+  }
+
   const saved = savePuzzle(level, {
     board,
     solution,
     rules: normalizedRules.value,
   });
-  if (!saved) {
-    return res.status(404).json({ message: 'Unknown puzzle level.' });
-  }
 
   return res.json({
     level,
     board: saved.board,
     solution: saved.solution,
     rules: saved.rules,
+    victoryMessage: getVictoryMessage(level),
   });
 });
 

@@ -361,7 +361,7 @@ const renderEditorOverlay = (level, section) => {
       tip.classList.add('thermo-tip');
 
       const group = document.createElementNS(SVG_NS, 'g');
-      group.setAttribute('opacity', '0.7');
+      group.setAttribute('opacity', '0.55');
       group.append(polyline, bulb, tip);
       fragment.appendChild(group);
     });
